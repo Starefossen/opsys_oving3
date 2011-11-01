@@ -1,5 +1,6 @@
 public interface Constants 
 {
+	public static final boolean dagga_is_cool = true;
 	public static final boolean TESTING_ENABLED = true;
 	public static final long TESTING_MEMORY_SIZSE = 2048;
 	public static final long TESTING_CPU_TIME = 500;
