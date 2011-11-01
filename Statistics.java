@@ -11,6 +11,9 @@ public class Statistics
 	/** The number of processes that have entered the system */
 	public long nofCreatedProcesses = 0;
 	
+	/** The total time the CPU has forced a process change */
+	public long nofForcedProcessChanges = 0;
+	
 	/** The total time that all completed processes have spent waiting for memory */
 	public long totalTimeSpentWaitingForMemory = 0;
 	
@@ -28,6 +31,7 @@ public class Statistics
 
 	/** The total time the CPU has been idle */
 	public long totalIdleCPUTime = 0;
+	
 
 	/**
 	 * Prints out a report summarizing all collected data about the simulation.
@@ -39,6 +43,7 @@ public class Statistics
 		System.out.println();
 		System.out.println("Number of completed processes:                                "+nofCompletedProcesses);
 		System.out.println("Number of created processes:                                  "+nofCreatedProcesses);
+		System.out.println("Number of (forced) process switches:                          "+nofForcedProcessChanges);
 		System.out.println();
 		System.out.println("Largest occuring memory queue length:                         "+memoryQueueLargestLength);
 		System.out.println("Average memory queue length:                                  "+(float)memoryQueueLengthTime/simulationLength);

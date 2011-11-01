@@ -61,10 +61,8 @@ public class Process implements Constants {
 	 * Creates a new process with given parameters. Other parameters are
 	 * randomly determined.
 	 * 
-	 * @param memorySize
-	 *            The size of the memory unit.
-	 * @param creationTime
-	 *            The global time when this process is created.
+	 * @param memorySize The size of the memory unit.
+	 * @param creationTime The global time when this process is created.
 	 */
 	public Process(long memorySize, long creationTime) {
 		// Memory need varies from 100 kB to 25% of memory size
@@ -106,16 +104,11 @@ public class Process implements Constants {
 	/**
 	 * Draws this process as a colored box with a process ID inside.
 	 * 
-	 * @param g
-	 *            The graphics context.
-	 * @param x
-	 *            The leftmost x-coordinate of the box.
-	 * @param y
-	 *            The topmost y-coordinate of the box.
-	 * @param w
-	 *            The width of the box.
-	 * @param h
-	 *            The height of the box.
+	 * @param g The graphics context.
+	 * @param x The leftmost x-coordinate of the box.
+	 * @param y The topmost y-coordinate of the box.
+	 * @param w The width of the box.
+	 * @param h The height of the box.
 	 */
 	public void draw(Graphics g, int x, int y, int w, int h) {
 		g.setColor(color);
@@ -129,11 +122,19 @@ public class Process implements Constants {
 	}
 
 	/**
+	 * Get unique ID for the process
+	 * 
+	 * @return {@code long} unique identificator
+	 */
+	public long getProcessId() {
+		return this.processId;
+	}
+
+	/**
 	 * This method is called when the process leaves the memory queue (and
 	 * enters the CPU queue).
 	 * 
-	 * @param clock
-	 *            The time when the process leaves the memory queue.
+	 * @param clock The time when the process leaves the memory queue.
 	 */
 	public void leftMemoryQueue(long clock) {
 		timeSpentWaitingForMemory += clock - timeOfLastEvent;
@@ -146,14 +147,14 @@ public class Process implements Constants {
 	 * @return The a {@code long} amount of memory needed by this process.
 	 */
 	public long getMemoryNeeded() {
+		System.out.println("Memory needed: " + memoryNeeded);
 		return memoryNeeded;
 	}
 
 	/**
 	 * Set time spent in CPU
 	 * 
-	 * @param time
-	 *            Time spent in CPU
+	 * @param time Time spent in CPU
 	 * 
 	 * @return Returns a positive {@code long} if there are remaining time;
 	 *         negative {@code long} if there was a rest time where the CPU was
@@ -178,14 +179,6 @@ public class Process implements Constants {
 	}
 
 	/**
-	 * 
-	 * @return
-	 */
-	public long getProcessId() {
-		return this.processId;
-	}
-	
-	/**
 	 * Get remaining time needed for this process
 	 * 
 	 * @return Returns a positive {@code long} of remaining time needed
@@ -199,12 +192,10 @@ public class Process implements Constants {
 	 * data collected by this process. This method is called when the process
 	 * leaves the system.
 	 * 
-	 * @param statistics
-	 *            The Statistics object to be updated.
+	 * @param statistics The Statistics object to be updated.
 	 */
 	public void updateStatistics(Statistics statistics) {
 		statistics.totalTimeSpentWaitingForMemory += timeSpentWaitingForMemory;
-		statistics.nofCompletedProcesses++;
 	}
 
 	// Add more methods as needed

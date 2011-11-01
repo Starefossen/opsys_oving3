@@ -79,7 +79,8 @@ public class Simulator implements Constants {
 		this.memory = new Memory(memoryQueue, memorySize, this.statistics);
 
 		// CPU
-		this.cpu = new CPU(cpuQueue, maxCpuTime, this.statistics);
+		this.cpu = new CPU(cpuQueue, maxCpuTime, this.statistics, this.gui,
+				this.memory);
 	}
 
 	/**
@@ -195,7 +196,8 @@ public class Simulator implements Constants {
 	 * @return random time greater then current time for a new event
 	 */
 	private long getNextTime() {
-		return this.clock + 1 + (long) (2 * Math.random() * this.avgArrivalInterval);
+		return this.clock + 1
+				+ (long) (2 * Math.random() * this.avgArrivalInterval);
 	}
 
 	/**
