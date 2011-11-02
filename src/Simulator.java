@@ -163,7 +163,6 @@ public class Simulator implements Constants {
 	private long getNextArrivalTime() {
 		long time = SystemClock.getTime();
 		long rand = (long) (2 * Math.random() * this.avgProcessArrival);
-		System.out.println("KAKE: " + rand);
 		return time + 1 + rand;
 	}
 
