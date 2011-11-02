@@ -59,7 +59,8 @@ public class Memory {
 	 * 			empty.
 	 */
 	public Process getNextProcess() {
-		
+		System.out.println("getNextProcess()");
+		System.out.println("Free memory: "+this.getFreeMemorySize());
 		Process p = null;
 		
 		if (!queue.isEmpty()) {
@@ -68,6 +69,8 @@ public class Memory {
 				queue.removeNext();
 				this.freeMemory -= p.getMemoryNeeded();
 				p.leaveMemoryQueue();
+			} else {
+				p = null;
 			}
 		}
 		
