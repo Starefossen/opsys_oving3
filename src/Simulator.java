@@ -69,12 +69,12 @@ public class Simulator implements Constants {
 		// Generate the first process arrival event
 		this.newEvent(NEW_PROCESS, 0);
 
-		while (SystemClock.getTime() < simulationLength
-				&& !eventQueue.isEmpty()) {
-
+		while (SystemClock.getTime() < simulationLength && !eventQueue.isEmpty()) {
 			// Get next event in queue
 			Event event = eventQueue.getNextEvent();
-			long timePassed = this.getTimePassed(event);
+			SystemClock.setTime(event.getTime());
+			System.out.println("Event time: "+event.getTime());
+			long timePassed = event.getTime() - SystemClock.getTime();
 
 			// Time passed for units
 			this.memory.timePassed(timePassed);
@@ -89,16 +89,6 @@ public class Simulator implements Constants {
 		}
 		System.out.println("..done.");
 		Statistics.printReport(simulationLength);
-	}
-
-	/**
-	 * Get time passed since last event
-	 * 
-	 * @param event New event currently being processed
-	 */
-	private long getTimePassed(Event event) {
-		SystemClock.setTime(event.getTime());
-		return event.getTime() - SystemClock.getTime();
 	}
 
 	/**
@@ -131,6 +121,7 @@ public class Simulator implements Constants {
 	 * Load next process in CPU and create next event for it.
 	 */
 	private void cpuLoadNextProcess() {
+		System.out.println("cpuLoadNextProcess()");
 		Process p = cpu.startNextProcess();
 		if (p != null) {
 			long processRemainingTime = p.getRemainingCPUTime();
@@ -148,6 +139,8 @@ public class Simulator implements Constants {
 				// Process needs to perform IO operation
 				this.newEvent(IO_REQUEST, processNextIO);
 			}
+		} else {
+			System.out.println("No process to load in CPU queue");
 		}
 	}
 
@@ -179,9 +172,11 @@ public class Simulator implements Constants {
 	 * there is enough memory for the processes.
 	 */
 	private void flushMemoryQueue() {
+		System.out.println("flushMemoryQueue()");
 		Process p = this.memory.getNextProcess();
 
 		while (p != null) {
+			System.out.println("got process from memory");
 			this.cpu.insertProcess(p);
 			p.updateStatistics();
 			p = this.memory.getNextProcess();
@@ -192,6 +187,7 @@ public class Simulator implements Constants {
 	 * Simulates a process arrival/creation.
 	 */
 	private void newProcess() {
+		System.out.println("newProcess()");
 		// New process
 		Process newProcess = new Process(this.memory.getMemorySize());
 
@@ -212,12 +208,14 @@ public class Simulator implements Constants {
 	 * Simulates a process switch.
 	 */
 	private void switchProcess() {
+		System.out.println("switchProcess()");
 		Debug.print(CLASS_NAME, "switchProcess", "Called");
-		// 1. FINISH PROCESS
-		/*
-		 * Process p = cpu.stopCurrentProcess(); cpu.insertProcess(p);
-		 * p.updateProcess();
-		 */
+		
+		// 1. STOP CURRENT PROCESS
+		Process p = cpu.stopCurrentProcess(); 
+		Statistics.processForceChange();
+		cpu.insertProcess(p);
+		// p.updateProcess();
 
 		// 2. LOAD NEXT PROCESS IN CPU QUEUE
 		this.cpuLoadNextProcess();
@@ -227,14 +225,15 @@ public class Simulator implements Constants {
 	 * Ends the active process, and deallocates any resources allocated to it.
 	 */
 	private void endProcess() {
+		System.out.println("endProcess()");
 		Debug.print(CLASS_NAME, "endProcess", "Called");
 		// Incomplete
 
-		// 1. FINISH PROCESS
-		/*
-		 * Process p = cpu.stopCurrentProcess(); Statisitcs.processFinsihed();
-		 * p.updateProcess();
-		 */
+		// 1. STOP CURRENT PROCESS
+		Process p = cpu.stopCurrentProcess(); 
+		Statistics.processCompleted();
+		//p.releaseMemory()
+		//p.updateProcess();
 
 		// 2. LOAD NEXT PROCESS IN CPU QUEUE
 		this.cpuLoadNextProcess();
@@ -245,14 +244,15 @@ public class Simulator implements Constants {
 	 * I/O operation.
 	 */
 	private void processIoRequest() {
+		System.out.println("processIoRequest()");
 		Debug.print(CLASS_NAME, "processIoRequest", "Called");
 		// Incomplete
 
 		// 1. GET CURRENT PROCESS IN CPU
-		/*
-		 * Process p = cpu.stopCurrentProcess(); io.insert(p);
-		 * p.updateProcess();
-		 */
+		Process p = cpu.stopCurrentProcess(); 
+		//Statistics.ioRequest();
+		//io.insert(p);
+		//p.updateProcess();
 
 		// 2. LOAD NEXT PROCESS IN CPU QUEUE
 		this.cpuLoadNextProcess();
@@ -263,6 +263,7 @@ public class Simulator implements Constants {
 	 * done with its I/O operation.
 	 */
 	private void endIoOperation() {
+		System.out.println("endIoOperation()");
 		Debug.print(CLASS_NAME, "endIoOperation", "Called");
 		// Incomplete
 
