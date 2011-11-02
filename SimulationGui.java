@@ -173,10 +173,11 @@ public class SimulationGui extends JFrame implements Constants, ActionListener, 
 	/**
 	 * Lets the GUI know that a discrete amount of time has passed.
 	 * @param time	The (simulated) time that has passed since the last call to this method.
+	 * @param freeMemory Amount of free memory
 	 */
-	public void timePassed(long time) {
+	public void timePassed(long time, long freeMemory) {
 		timeElapsed += time;
-		timeElapsedLabel.setText("Simulated time elapsed: "+timeElapsed+" ms.");
+		timeElapsedLabel.setText("Time: "+timeElapsed+" - Free RAM: "+freeMemory+"");
 		timeElapsedLabel.repaint();
 		try	{
 			if(sleep && isShowing())

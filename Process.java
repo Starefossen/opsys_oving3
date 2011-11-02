@@ -64,7 +64,7 @@ public class Process implements Constants {
 	 * @param memorySize The size of the memory unit.
 	 * @param creationTime The global time when this process is created.
 	 */
-	public Process(long memorySize, long creationTime) {
+	public Process(long memorySize) {
 		// Memory need varies from 100 kB to 25% of memory size
 		memoryNeeded = 100 + (long) (Math.random() * (memorySize / 4 - 100));
 
@@ -76,7 +76,7 @@ public class Process implements Constants {
 		avgIoInterval = (1 + (long) (Math.random() * 25)) * cpuTimeNeeded / 100;
 
 		// The first and latest event involving this process is its creation
-		timeOfLastEvent = creationTime;
+		timeOfLastEvent = SystemClock.getTime();
 
 		// Assign a process ID
 		processId = nextProcessId++;
@@ -136,9 +136,9 @@ public class Process implements Constants {
 	 * 
 	 * @param clock The time when the process leaves the memory queue.
 	 */
-	public void leftMemoryQueue(long clock) {
-		timeSpentWaitingForMemory += clock - timeOfLastEvent;
-		timeOfLastEvent = clock;
+	public void leaveMemoryQueue() {
+		timeSpentWaitingForMemory += SystemClock.getTime() - timeOfLastEvent;
+		timeOfLastEvent = SystemClock.getTime();
 	}
 
 	/**
@@ -147,7 +147,6 @@ public class Process implements Constants {
 	 * @return The a {@code long} amount of memory needed by this process.
 	 */
 	public long getMemoryNeeded() {
-		System.out.println("Memory needed: " + memoryNeeded);
 		return memoryNeeded;
 	}
 
@@ -160,22 +159,17 @@ public class Process implements Constants {
 	 *         negative {@code long} if there was a rest time where the CPU was
 	 *         idle.
 	 */
-	public long incrementCPUTime(long time) {
-		// "Remaining" time
-		long tmpTime = this.cpuTimeNeeded - (this.timeSpentInCpu + time);
-
-		if (tmpTime < 0) {
-			// Update time spent
-			this.timeSpentInCpu += time - Math.abs(tmpTime);
-
-			// Return rest which was idle CPU time after the process finished
-			return tmpTime;
-		} else {
-			// Update time spent
-			this.timeSpentInCpu += time;
-
-			return this.getRemainingCPUTime();
-		}
+	public void incrementCPUTime(long time) {
+		this.timeSpentInCpu += time;
+		this.timeToNextIoOperation -= time;
+	}
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public long getTimeToNextIoOperation() {
+		return timeToNextIoOperation;
 	}
 
 	/**
@@ -186,17 +180,16 @@ public class Process implements Constants {
 	public long getRemainingCPUTime() {
 		return this.cpuTimeNeeded - this.timeSpentInCpu;
 	}
-
+	
 	/**
 	 * Updates the statistics collected by the given Statistic object, adding
 	 * data collected by this process. This method is called when the process
-	 * leaves the system.
+	 * leaves the system. (eg. process is completed)
 	 * 
 	 * @param statistics The Statistics object to be updated.
 	 */
-	public void updateStatistics(Statistics statistics) {
-		statistics.totalTimeSpentWaitingForMemory += timeSpentWaitingForMemory;
+	public void updateStatistics() {
+		Statistics.processMemoryWait(timeSpentWaitingForMemory);
 	}
-
 	// Add more methods as needed
 }
