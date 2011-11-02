@@ -42,8 +42,15 @@ public class IO implements Constants {
 	}
 	
 	public Process getNextProcess() {
-		
+		if (queue.isEmpty()) {
+			return null;
+		}
+
 		return (Process) queue.removeNext();
+	}
+	
+	public boolean isIdle() {
+		return (this.cp == null);
 	}
 	
 	public void timePassed(long timePassed) {

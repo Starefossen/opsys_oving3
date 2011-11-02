@@ -27,6 +27,7 @@ public class Simulator implements Constants {
 
 	/** The average length between process arrivals */
 	private long avgProcessArrival;
+	private long avgIoTime;
 
 	/** Class name used for debug messages */
 	private final static String CLASS_NAME = "Simulator";
@@ -50,13 +51,14 @@ public class Simulator implements Constants {
 
 		this.simulationLength = simulationLength;
 		this.avgProcessArrival = avgArrivalInterval;
+		this.avgIoTime = avgIoTime;
 		this.maxCpuTime = maxCpuTime;
 		this.gui = gui;
 		
 		this.eventQueue = new EventQueue();
 		this.memory = new Memory(memoryQueue, memorySize);
 		this.cpu = new CPU(cpuQueue, this.gui);
-		//this.io = new IO(ioQueue, gui, memory);
+		this.io = new IO(ioQueue, this.gui);
 	}
 
 	/**
@@ -179,6 +181,17 @@ public class Simulator implements Constants {
 	}
 
 	/**
+	 * 
+	 * @return
+	 */
+	private long getTimeInIo() {
+		long rand = (long) (2 * Math.random() * this.avgIoTime);
+		long result = 1 + rand;
+
+		return result;
+	}
+
+	/**
 	 * Transfers processes from the memory queue to the ready queue as long as
 	 * there is enough memory for the processes.
 	 */
@@ -209,7 +222,7 @@ public class Simulator implements Constants {
 		this.flushMemoryQueue();
 
 		// If first process load it imideately
-		if (SystemClock.getTime() == 0) {
+		if (cpu.isIdle()) {
 			this.cpuLoadNextProcess();
 		}
 		
@@ -261,22 +274,36 @@ public class Simulator implements Constants {
 	 */
 	private void processIoRequest() {
 		System.out.println("processIoRequest()");
-		Debug.print(CLASS_NAME, "processIoRequest", "Called");
 		// Incomplete
 
 		// 1. GET CURRENT PROCESS IN CPU
 		Process p = cpu.stopCurrentProcess(); 
+
 		if (p == null) {
-			System.out.println("Process is empty!");
+			System.out.println("Kake");
 			System.exit(0);
-		} else {
-			//Statistics.ioRequest();
-			io.insertProcess(p);
-			p.updateProcess(IO_QUEUE);
-	
-			// 2. LOAD NEXT PROCESS IN CPU QUEUE
+		}
+		
+		//Statistics.ioRequest();
+		io.insertProcess(p);
+		p.updateProcess(IO_ACTIVE);
+		
+		// CPU idle check
+		if (cpu.isIdle()) {
 			this.cpuLoadNextProcess();
 		}
+
+		// IO idle check
+		if (io.isIdle()) {
+			p = io.startNextProcess();
+			if (p != null) {
+				p.updateProcess(IO_ACTIVE);
+				this.newEvent(END_IO, this.getTimeInIo());
+			}
+		}
+
+		// 2. LOAD NEXT PROCESS IN CPU QUEUE
+		this.cpuLoadNextProcess();			
 	}
 
 	/**
@@ -285,19 +312,23 @@ public class Simulator implements Constants {
 	 */
 	private void endIoOperation() {
 		System.out.println("endIoOperation()");
-		Debug.print(CLASS_NAME, "endIoOperation", "Called");
 		// Incomplete
 
 		// 1. GET CURRENT PROCESS IN IO
 		Process p = io.stopCurrentProcess();
+		
 		cpu.insertProcess(p);
 		p.updateProcess(CPU_QUEUE);
+		
+		if (cpu.isIdle()) {
+			this.cpuLoadNextProcess();
+		}
 
 		// 2. LOAD NEXT PROCESS IN IO QUEUE
 		p = io.startNextProcess(); 
 		if (p != null) {
 			p.updateProcess(IO_ACTIVE);
-			//this.newEvent(END_IO, p.getIoTime());
+			this.newEvent(END_IO, this.getTimeInIo());
 		}
 	}
 
