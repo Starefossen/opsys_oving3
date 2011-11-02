@@ -96,6 +96,8 @@ public class SimulationGui extends JFrame implements Constants, ActionListener, 
 		lowerPanel.add(startButton);
 		startButton.setBounds(320,60,154,20);
 		startButton.addActionListener(this);
+		
+		startButton.doClick(); // added by dagga
 	}
 
 	/**

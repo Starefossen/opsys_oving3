@@ -21,6 +21,9 @@ public class CPU implements Constants {
 		cp = getNextProcess();
 		gui.setCpuActive(cp); // gui
 	
+		if (queue.isEmpty()) {
+			return null;
+		}
 		return cp;		
 	}
 	
@@ -30,6 +33,10 @@ public class CPU implements Constants {
 		
 		Process tmp = cp;
 		cp = null;
+		
+		if (queue.isEmpty()) {
+			return null;
+		}
 		return tmp;
 	}
 	
