@@ -72,9 +72,8 @@ public class Simulator implements Constants {
 		while (SystemClock.getTime() < simulationLength && !eventQueue.isEmpty()) {
 			// Get next event in queue
 			Event event = eventQueue.getNextEvent();
-			SystemClock.setTime(event.getTime());
-			System.out.println("Event time: "+event.getTime());
 			long timePassed = event.getTime() - SystemClock.getTime();
+			SystemClock.setTime(event.getTime());
 
 			// Time passed for units
 			this.memory.timePassed(timePassed);
@@ -86,6 +85,7 @@ public class Simulator implements Constants {
 			if (event.getTime() < simulationLength) {
 				processEvent(event);
 			}
+			System.out.println("---------------------------------------------");
 		}
 		System.out.println("..done.");
 		Statistics.printReport(simulationLength);
@@ -152,6 +152,7 @@ public class Simulator implements Constants {
 	 */
 	private void newEvent(int EVENT, long time) {
 		long eventTime = SystemClock.getTime() + time;
+		System.out.println("newEvent("+EVENT+", "+time+") => "+eventTime);
 		eventQueue.insertEvent(new Event(EVENT, eventTime));
 	}
 
@@ -161,9 +162,10 @@ public class Simulator implements Constants {
 	 * @return random time greater then current time for a new event
 	 */
 	private long getNextArrivalTime() {
-		long time = SystemClock.getTime();
 		long rand = (long) (2 * Math.random() * this.avgProcessArrival);
-		return time + 1 + rand;
+		long result = 1 + rand;
+
+		return result;
 	}
 
 	/**
@@ -189,13 +191,18 @@ public class Simulator implements Constants {
 		System.out.println("newProcess()");
 		// New process
 		Process newProcess = new Process(this.memory.getMemorySize());
-
+		
 		// Insert process to memory queue
 		this.memory.insertProcess(newProcess);
 
 		// Transfer process from memory to ready queue
 		this.flushMemoryQueue();
 
+		// If first process load it imideately
+		if (SystemClock.getTime() == 0) {
+			this.cpuLoadNextProcess();
+		}
+		
 		// New process event in evenet queue
 		this.newEvent(NEW_PROCESS, getNextArrivalTime());
 

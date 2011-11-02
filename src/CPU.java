@@ -30,6 +30,10 @@ public class CPU implements Constants {
 		
 		Process tmp = cp;
 		cp = null;
+		
+		if (queue.isEmpty()) {
+			return null;
+		}
 		return tmp;
 	}
 	
@@ -38,6 +42,9 @@ public class CPU implements Constants {
 	}
 	
 	public Process getNextProcess() {
+		if (queue.isEmpty()) {
+			return null;
+		}
 		
 		return (Process) queue.removeNext();
 	}
