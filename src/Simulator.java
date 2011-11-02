@@ -127,14 +127,17 @@ public class Simulator implements Constants {
 		System.out.println("cpuLoadNextProcess()");
 		Process p = cpu.startNextProcess();
 		if (p != null) {
+			p.updateProcess(CPU_ACTIVE);
+			
 			long processRemainingTime = p.getRemainingCPUTime();
 			long maxCpuTime = this.maxCpuTime;
 			long processNextIO = p.getTimeToNextIoOperation();
-
-			System.out.println("Got process from CPU queue...");
-			System.out.println("processRemainingTime:				"+processRemainingTime);
-			System.out.println("maxCpuTime:					"+maxCpuTime);
-			System.out.println("processNextIO:					"+processNextIO);
+			long pid = p.getProcessId();
+			
+			System.out.println("["+pid+"] Got process from CPU queue...");
+			System.out.println("["+pid+"] processRemainingTime:				"+processRemainingTime);
+			System.out.println("["+pid+"] maxCpuTime:						"+maxCpuTime);
+			System.out.println("["+pid+"] processNextIO:					"+processNextIO);
 
 			if (processRemainingTime < maxCpuTime && processRemainingTime < processNextIO) {
 				// Process is finished
