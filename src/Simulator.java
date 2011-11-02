@@ -54,8 +54,8 @@ public class Simulator implements Constants {
 
 		this.eventQueue = new EventQueue();
 		this.memory = new Memory(memoryQueue, memorySize);
-		this.cpu = new CPU(cpuQueue, maxCpuTime, this.gui, this.memory);
-		this.io = new IO(ioQueue, gui, memory);
+		this.cpu = new CPU(cpuQueue, this.gui);
+		//this.io = new IO(ioQueue, gui, memory);
 	}
 
 	/**
@@ -131,15 +131,13 @@ public class Simulator implements Constants {
 	 * Load next process in CPU and create next event for it.
 	 */
 	private void cpuLoadNextProcess() {
-		Process p = null;
-		// Process p = cpu.startNextProcess();
+		Process p = cpu.startNextProcess();
 		if (p != null) {
 			long processRemainingTime = p.getRemainingCPUTime();
 			long maxCpuTime = this.maxCpuTime;
 			long processNextIO = p.getTimeToNextIoOperation();
 
-			if (processRemainingTime < maxCpuTime
-					&& processRemainingTime < processNextIO) {
+			if (processRemainingTime < maxCpuTime && processRemainingTime < processNextIO) {
 				// Process is finished
 				this.newEvent(END_PROCESS, processRemainingTime);
 			} else if (processRemainingTime > maxCpuTime

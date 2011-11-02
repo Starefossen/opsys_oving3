@@ -59,18 +59,19 @@ public class Memory {
 	 * 			empty.
 	 */
 	public Process getNextProcess() {
-		Process process = (Process) queue.removeNext();
 		
-		if (process != null) {
-			if (process.getMemoryNeeded() <= freeMemory) {
-				
-				this.freeMemory -= process.getMemoryNeeded();
-				
-				process.leaveMemoryQueue();
+		Process p = null;
+		
+		if (!queue.isEmpty()) {
+			p = (Process) queue.getNext();
+			if (p.getMemoryNeeded() <= freeMemory) {
+				queue.removeNext();
+				this.freeMemory -= p.getMemoryNeeded();
+				p.leaveMemoryQueue();
 			}
 		}
 		
-		return process;
+		return p;
 	}
 
 	/**
