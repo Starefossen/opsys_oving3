@@ -3,7 +3,7 @@
  * simulated system.
  */
 public class CPU implements Constants {
-	
+	//pewpew
 	private Queue queue;
 	
 	private Process cp;
