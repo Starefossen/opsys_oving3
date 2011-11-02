@@ -76,23 +76,19 @@ public class Simulator implements Constants {
 		Debug.print(CLASS_NAME, "simulate", "Starting simulation...");
 
 		// Generate the first process arrival event
-		eventQueue.insertEvent(new Event(NEW_PROCESS, 0));
+		this.newEvent(NEW_PROCESS, 0);
 
 		while (SystemClock.getTime() < simulationLength && !eventQueue.isEmpty()) {
 
-			// Find the next event
+			// Get next event in queue
 			Event event = eventQueue.getNextEvent();
+
+			// Handle event time
 			long eventTime = event.getTime();
-
-			// Time passed since last event
 			long timePassed = eventTime - SystemClock.getTime();
-
-			// Update System Clock
 			SystemClock.setTime(eventTime);
 
-			// Let the RAM know that time has passed
-			// Let the GUI know that time has passed
-			// Let CPU know that time has passed
+			// Update time passed
 			this.memory.timePassed(timePassed);
 			//this.io.timePassed(timeDifference);
 			this.cpu.timePassed(timePassed);
@@ -100,19 +96,12 @@ public class Simulator implements Constants {
 
 			// Let IO know that time has passed
 			//this.io.timePassed(timeDifference);
-
 			// Deal with the event
 			if (eventTime < simulationLength) {
 				processEvent(event);
 			}
-
-			// Note that the processing of most events should lead to new
-			// events being added to the event queue!
-
-			// TODO: You may want to extend this method somewhat.
 		}
 		System.out.println("..done.");
-		// End the simulation by printing out the required statistics
 		Statistics.printReport(simulationLength);
 	}
 
@@ -126,7 +115,7 @@ public class Simulator implements Constants {
 	private void processEvent(Event event) {
 		switch (event.getType()) {
 		case NEW_PROCESS:
-			createProcess();
+			createNewProcess();
 			break;
 		case SWITCH_PROCESS:
 			switchProcess();
@@ -146,10 +135,7 @@ public class Simulator implements Constants {
 	/**
 	 * Simulates a process arrival/creation.
 	 */
-	private void createProcess() {
-		Debug.print(CLASS_NAME, "createProcess", "Called");
-
-		// Create a new process
+	private void createNewProcess() {
 		Process newProcess = new Process(this.memory.getMemorySize());
 		
 		this.memory.insertProcess(newProcess);
@@ -157,10 +143,7 @@ public class Simulator implements Constants {
 		// Transfer process from memory to ready queue
 		flushMemoryQueue();
 
-		// Get time for next process arrival
 		long arrivalTime = getNextProcessArrivalTime();
-
-		// Add an event for the next process arrival
 		eventQueue.insertEvent(new Event(NEW_PROCESS, arrivalTime));
 
 		// Update statistics
@@ -171,7 +154,7 @@ public class Simulator implements Constants {
 	 * Create next event for new process
 	 * @param p
 	 */
-	private void createEventForNewProcess(Process p) {
+	private void createEventForProcess(Process p) {
 		long processRemainingTime = p.getRemainingCPUTime();
 		long maxCpuTime = this.maxCpuTime;
 		long processNextIO = p.getTimeToNextIoOperation();
@@ -212,31 +195,11 @@ public class Simulator implements Constants {
 	 * there is enough memory for the processes.
 	 */
 	private void flushMemoryQueue() {
-		Debug.print(CLASS_NAME, "flushMemoryQueue", "Called");
-
 		Process p = this.memory.getNextProcess();
 
-		// As long as there is enough memory, processes are moved from the
-		// memory queue to the CPU queue
 		while (p != null) {
 			this.cpu.insertProcess(p);
-			this.createEventForNewProcess(p);
-
-			// Also add new events to the event queue if needed
-			// TODO: Do this
-
-			// Since we haven't implemented the CPU and I/O device yet,
-			// we let the process leave the system immediately, for now.
-			// this.cpu.processCompleted(p);
-			// this.memory.processCompleted(p);
-
-			// Try to use the freed memory:
-			flushMemoryQueue();
-
-			// Update statistics
 			p.updateStatistics();
-
-			// Check for more free memory
 			p = this.memory.getNextProcess();
 		}
 	}
@@ -246,6 +209,7 @@ public class Simulator implements Constants {
 	 */
 	private void switchProcess() {
 		Debug.print(CLASS_NAME, "switchProcess", "Called");
+		// Incomplete
 	}
 
 	/**
