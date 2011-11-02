@@ -12,10 +12,10 @@ public class Simulator implements Constants {
 
 	/** Reference to the CPU unit */
 	private CPU cpu;
-	
+
 	/** Reference to the IO unit */
 	private IO io;
-	
+
 	/** Reference to the GUI interface */
 	private Gui gui;
 
@@ -34,24 +34,15 @@ public class Simulator implements Constants {
 	/**
 	 * Constructs a scheduling simulator with the given parameters.
 	 * 
-	 * @param memoryQueue
-	 *            The memory queue to be used.
-	 * @param cpuQueue
-	 *            The CPU queue to be used.
-	 * @param ioQueue
-	 *            The I/O queue to be used.
-	 * @param memorySize
-	 *            The size of the this.memory.
-	 * @param maxCpuTime
-	 *            The maximum time quant used by the RR algorithm.
-	 * @param avgIoTime
-	 *            The average length of an I/O operation.
-	 * @param simulationLength
-	 *            The length of the simulation.
-	 * @param avgArrivalInterval
-	 *            The average time between process arrivals.
-	 * @param gui
-	 *            Reference to the GUI interface.
+	 * @param memoryQueue The memory queue to be used.
+	 * @param cpuQueue The CPU queue to be used.
+	 * @param ioQueue The I/O queue to be used.
+	 * @param memorySize The size of the this.memory.
+	 * @param maxCpuTime The maximum time quant used by the RR algorithm.
+	 * @param avgIoTime The average length of an I/O operation.
+	 * @param simulationLength The length of the simulation.
+	 * @param avgArrivalInterval The average time between process arrivals.
+	 * @param gui Reference to the GUI interface.
 	 */
 	public Simulator(Queue memoryQueue, Queue cpuQueue, Queue ioQueue,
 			long memorySize, long maxCpuTime, long avgIoTime,
@@ -64,7 +55,7 @@ public class Simulator implements Constants {
 		this.eventQueue = new EventQueue();
 		this.memory = new Memory(memoryQueue, memorySize);
 		this.cpu = new CPU(cpuQueue, maxCpuTime, this.gui, this.memory);
-		//this.io = new IO(ioQueue);
+		this.io = new IO(ioQueue, gui, memory);
 	}
 
 	/**
@@ -78,26 +69,21 @@ public class Simulator implements Constants {
 		// Generate the first process arrival event
 		this.newEvent(NEW_PROCESS, 0);
 
-		while (SystemClock.getTime() < simulationLength && !eventQueue.isEmpty()) {
+		while (SystemClock.getTime() < simulationLength
+				&& !eventQueue.isEmpty()) {
 
 			// Get next event in queue
 			Event event = eventQueue.getNextEvent();
+			long timePassed = this.getTimePassed(event);
 
-			// Handle event time
-			long eventTime = event.getTime();
-			long timePassed = eventTime - SystemClock.getTime();
-			SystemClock.setTime(eventTime);
-
-			// Update time passed
+			// Time passed for units
 			this.memory.timePassed(timePassed);
-			//this.io.timePassed(timeDifference);
-			this.cpu.timePassed(timePassed);
-			this.gui.timePassed(timePassed, this.memory.getFreeMemorySize());
+			// this.io.timePassed(timeDifference);
+			// this.cpu.timePassed(timePassed);
+			// this.gui.timePassed(timePassed, this.memory.getFreeMemorySize());
 
-			// Let IO know that time has passed
-			//this.io.timePassed(timeDifference);
 			// Deal with the event
-			if (eventTime < simulationLength) {
+			if (event.getTime() < simulationLength) {
 				processEvent(event);
 			}
 		}
@@ -106,16 +92,25 @@ public class Simulator implements Constants {
 	}
 
 	/**
+	 * Get time passed since last event
+	 * 
+	 * @param event New event currently being processed
+	 */
+	private long getTimePassed(Event event) {
+		SystemClock.setTime(event.getTime());
+		return event.getTime() - SystemClock.getTime();
+	}
+
+	/**
 	 * Processes an event by inspecting its type and delegating the work to the
 	 * appropriate method.
 	 * 
-	 * @param event
-	 *            The event to be processed.
+	 * @param event The event to be processed.
 	 */
 	private void processEvent(Event event) {
 		switch (event.getType()) {
 		case NEW_PROCESS:
-			createNewProcess();
+			newProcess();
 			break;
 		case SWITCH_PROCESS:
 			switchProcess();
@@ -133,58 +128,48 @@ public class Simulator implements Constants {
 	}
 
 	/**
-	 * Simulates a process arrival/creation.
+	 * Load next process in CPU and create next event for it.
 	 */
-	private void createNewProcess() {
-		Process newProcess = new Process(this.memory.getMemorySize());
-		
-		this.memory.insertProcess(newProcess);
+	private void cpuLoadNextProcess() {
+		Process p = null;
+		// Process p = cpu.startNextProcess();
+		if (p != null) {
+			long processRemainingTime = p.getRemainingCPUTime();
+			long maxCpuTime = this.maxCpuTime;
+			long processNextIO = p.getTimeToNextIoOperation();
 
-		// Transfer process from memory to ready queue
-		flushMemoryQueue();
-
-		long arrivalTime = getNextProcessArrivalTime();
-		eventQueue.insertEvent(new Event(NEW_PROCESS, arrivalTime));
-
-		// Update statistics
-		Statistics.processCreated();
-	}
-
-	/**
-	 * Create next event for new process
-	 * @param p
-	 */
-	private void createEventForProcess(Process p) {
-		long processRemainingTime = p.getRemainingCPUTime();
-		long maxCpuTime = this.maxCpuTime;
-		long processNextIO = p.getTimeToNextIoOperation();
-		
-		if (processRemainingTime < maxCpuTime && processRemainingTime < processNextIO) {
-			// Process is finished
-			this.newEvent(END_PROCESS, processRemainingTime);
-		} else if (processRemainingTime > maxCpuTime && processRemainingTime < processNextIO) {
-			// Process max time in CPU exceeded
-			this.newEvent(SWITCH_PROCESS, maxCpuTime);
-		} else {
-			// Process needs to perform IO operation
-			this.newEvent(IO_REQUEST, processNextIO);
+			if (processRemainingTime < maxCpuTime
+					&& processRemainingTime < processNextIO) {
+				// Process is finished
+				this.newEvent(END_PROCESS, processRemainingTime);
+			} else if (processRemainingTime > maxCpuTime
+					&& processRemainingTime < processNextIO) {
+				// Process max time in CPU exceeded
+				this.newEvent(SWITCH_PROCESS, maxCpuTime);
+			} else {
+				// Process needs to perform IO operation
+				this.newEvent(IO_REQUEST, processNextIO);
+			}
 		}
 	}
-	
+
 	/**
+	 * New event in event queue
 	 * 
+	 * @param EVENT - event type to create
+	 * @param time - time until the event
 	 */
 	private void newEvent(int EVENT, long time) {
-		long eventTime = SystemClock.getTime()+time;
+		long eventTime = SystemClock.getTime() + time;
 		eventQueue.insertEvent(new Event(EVENT, eventTime));
 	}
-	
+
 	/**
 	 * Get time for next event
 	 * 
 	 * @return random time greater then current time for a new event
 	 */
-	private long getNextProcessArrivalTime() {
+	private long getNextArrivalTime() {
 		long time = SystemClock.getTime();
 		long rand = (long) (2 * Math.random() * this.avgProcessArrival);
 		return time + 1 + rand;
@@ -205,11 +190,38 @@ public class Simulator implements Constants {
 	}
 
 	/**
+	 * Simulates a process arrival/creation.
+	 */
+	private void newProcess() {
+		// New process
+		Process newProcess = new Process(this.memory.getMemorySize());
+
+		// Insert process to memory queue
+		this.memory.insertProcess(newProcess);
+
+		// Transfer process from memory to ready queue
+		this.flushMemoryQueue();
+
+		// New process event in evenet queue
+		this.newEvent(NEW_PROCESS, getNextArrivalTime());
+
+		// Update statistics
+		Statistics.processCreated();
+	}
+
+	/**
 	 * Simulates a process switch.
 	 */
 	private void switchProcess() {
 		Debug.print(CLASS_NAME, "switchProcess", "Called");
-		// Incomplete
+		// 1. FINISH PROCESS
+		/*
+		 * Process p = cpu.stopCurrentProcess(); cpu.insertProcess(p);
+		 * p.updateProcess();
+		 */
+
+		// 2. LOAD NEXT PROCESS IN CPU QUEUE
+		this.cpuLoadNextProcess();
 	}
 
 	/**
@@ -218,6 +230,15 @@ public class Simulator implements Constants {
 	private void endProcess() {
 		Debug.print(CLASS_NAME, "endProcess", "Called");
 		// Incomplete
+
+		// 1. FINISH PROCESS
+		/*
+		 * Process p = cpu.stopCurrentProcess(); Statisitcs.processFinsihed();
+		 * p.updateProcess();
+		 */
+
+		// 2. LOAD NEXT PROCESS IN CPU QUEUE
+		this.cpuLoadNextProcess();
 	}
 
 	/**
@@ -227,6 +248,15 @@ public class Simulator implements Constants {
 	private void processIoRequest() {
 		Debug.print(CLASS_NAME, "processIoRequest", "Called");
 		// Incomplete
+
+		// 1. GET CURRENT PROCESS IN CPU
+		/*
+		 * Process p = cpu.stopCurrentProcess(); io.insert(p);
+		 * p.updateProcess();
+		 */
+
+		// 2. LOAD NEXT PROCESS IN CPU QUEUE
+		this.cpuLoadNextProcess();
 	}
 
 	/**
@@ -236,23 +266,17 @@ public class Simulator implements Constants {
 	private void endIoOperation() {
 		Debug.print(CLASS_NAME, "endIoOperation", "Called");
 		// Incomplete
-	}
 
-	/**
-	 * Reads a number from the an input reader.
-	 * 
-	 * @param reader
-	 *            The input reader from which to read a number.
-	 * @return The number that was inputed.
-	 */
-	public static long readLong(BufferedReader reader) {
-		try {
-			return Long.parseLong(reader.readLine());
-		} catch (IOException ioe) {
-			return 100;
-		} catch (NumberFormatException nfe) {
-			return 0;
-		}
+		// 1. GET CURRENT PROCESS IN IO
+		/*
+		 * Process p = io.stopCurrentProcess(); cpu.insert(p); p.updateProcess()
+		 */
+
+		// 2. LOAD NEXT PROCESS IN IO QUEUE
+		/*
+		 * Process p = io.startNextProcess(); if (p != null) {
+		 * this.newEvent(END_IO, p.getIoTime()); }
+		 */
 	}
 
 	/**
@@ -260,8 +284,7 @@ public class Simulator implements Constants {
 	 * and starts up the GUI. The GUI will then start the simulation when the
 	 * user clicks the "Start simulation" button.
 	 * 
-	 * @param args
-	 *            Parameters from the command line, they are ignored.
+	 * @param args Parameters from the command line, they are ignored.
 	 */
 	public static void main(String args[]) {
 		if (!TESTING_ENABLED) {
@@ -301,6 +324,22 @@ public class Simulator implements Constants {
 			SimulationGui gui = new SimulationGui(TESTING_MEMORY_SIZSE,
 					TESTING_CPU_TIME, TESTING_IO_TIME,
 					TESTING_SIMULATION_LENGTH, TESTING_AVG_ARRIVAL_INTERVAL);
+		}
+	}
+
+	/**
+	 * Reads a number from the an input reader.
+	 * 
+	 * @param reader The input reader from which to read a number.
+	 * @return The number that was inputed.
+	 */
+	public static long readLong(BufferedReader reader) {
+		try {
+			return Long.parseLong(reader.readLine());
+		} catch (IOException ioe) {
+			return 100;
+		} catch (NumberFormatException nfe) {
+			return 0;
 		}
 	}
 }
