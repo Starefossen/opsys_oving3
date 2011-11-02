@@ -65,7 +65,7 @@ public class Queue extends JPanel implements Constants {
 	 * @return	Whether or not the queue is empty.
 	 */
 	public boolean isEmpty() {
-		return content.size() == 0;
+		return 0 == content.size();
 	}
 
 	/**
