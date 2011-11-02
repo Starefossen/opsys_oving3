@@ -46,7 +46,6 @@ public class CPU implements Constants {
 	 * @param p - The process to be added.
 	 */
 	public void insertProcess(Process p) {
-<<<<<<< HEAD:CPU.java
 		this.queue.insert(p);
 	}
 
@@ -84,12 +83,6 @@ public class CPU implements Constants {
 	 */
 	private long min(long time1, long time2, long time3) {
 		return Math.min(time1, Math.min(time2, time3));
-=======
-		Debug.print(CLASS_NAME, "insertProcess", "PID '" + p.getProcessId()
-				+ "'");
-		cpuQueue.insert(p);
-		this.cpuQueue.insert(p);
->>>>>>> 7a157f874921917814194b43392e266ca48c854a:src/CPU.java
 	}
 
 	/**
