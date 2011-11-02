@@ -44,7 +44,7 @@ public class CPU implements Constants {
 	
 	public void timePassed(long timePassed) {
 		
-		// register cpu idle time
+		// register CPU idle time
 		if(cp == null) {
 			
 			Statistics.cpuIdleTime(timePassed);
