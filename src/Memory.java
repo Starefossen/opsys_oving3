@@ -4,9 +4,7 @@
  */
 public class Memory {
 	/** The queue of processes waiting for free memory */
-	private Queue memoryQueue;
-	/** A reference to the statistics collector */
-	private Statistics statistics;
+	private Queue queue;
 	/** The amount of memory in the memory device */
 	private long memorySize;
 	/** The amount of free memory in the memory device */
@@ -19,11 +17,10 @@ public class Memory {
 	 * @param memorySize The amount of memory in the memory device.
 	 * @param statistics A reference to the statistics collector.
 	 */
-	public Memory(Queue memoryQueue, long memorySize, Statistics statistics) {
-		this.memoryQueue = memoryQueue;
+	public Memory(Queue memoryQueue, long memorySize) {
+		this.queue = memoryQueue;
 		this.memorySize = memorySize;
-		this.statistics = statistics;
-		freeMemory = memorySize;
+		this.freeMemory = memorySize;
 	}
 
 	/**
@@ -32,7 +29,16 @@ public class Memory {
 	 * @return The size of the memory device.
 	 */
 	public long getMemorySize() {
-		return memorySize;
+		return this.memorySize;
+	}
+
+	/**
+	 * Returns the amount of free memeory
+	 * 
+	 * @return The size of the free memory.
+	 */
+	public long getFreeMemorySize() {
+		return this.freeMemory;
 	}
 
 	/**
@@ -41,7 +47,7 @@ public class Memory {
 	 * @param p The process to be added.
 	 */
 	public void insertProcess(Process p) {
-		memoryQueue.insert(p);
+		queue.insert(p);
 	}
 
 	/**
@@ -49,21 +55,22 @@ public class Memory {
 	 * process in the memory queue proceed to the cpu queue. If there is, the
 	 * process that was granted memory is returned, otherwise null is returned.
 	 * 
-	 * @param clock The current time.
+	 * @return Returns next process in memory queue; {@code null} if the queue is 
+	 * 			empty.
 	 */
-	public Process checkMemory(long clock) {
-		if (!memoryQueue.isEmpty()) {
-			Process nextProcess = (Process) memoryQueue.getNext();
-			if (nextProcess.getMemoryNeeded() <= freeMemory) {
-				// Allocate memory to this process
-				freeMemory -= nextProcess.getMemoryNeeded();
-				System.out.println("Free memory: " + freeMemory);
-				nextProcess.leftMemoryQueue(clock);
-				memoryQueue.removeNext();
-				return nextProcess;
+	public Process getNextProcess() {
+		Process process = (Process) queue.removeNext();
+		
+		if (process != null) {
+			if (process.getMemoryNeeded() <= freeMemory) {
+				
+				this.freeMemory -= process.getMemoryNeeded();
+				
+				process.leaveMemoryQueue();
 			}
 		}
-		return null;
+		
+		return process;
 	}
 
 	/**
@@ -73,11 +80,8 @@ public class Memory {
 	 *            to this method.
 	 */
 	public void timePassed(long timePassed) {
-		statistics.memoryQueueLengthTime += memoryQueue.getQueueLength()
-				* timePassed;
-		if (memoryQueue.getQueueLength() > statistics.memoryQueueLargestLength) {
-			statistics.memoryQueueLargestLength = memoryQueue.getQueueLength();
-		}
+		Statistics.memoryQueueLengthTime(queue.getQueueLength(), timePassed);
+		Statistics.memoryQueueLenght(queue.getQueueLength());
 	}
 
 	/**
@@ -86,7 +90,7 @@ public class Memory {
 	 * 
 	 * @param p The process that is leaving the system.
 	 */
-	public void processCompleted(Process p) {
+	public void releaseMemory(Process p) {
 		freeMemory += p.getMemoryNeeded();
 	}
 }

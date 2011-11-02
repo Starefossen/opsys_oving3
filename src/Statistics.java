@@ -1,56 +1,151 @@
 /**
- * This class contains a lot of public variables that can be updated
- * by other classes during a simulation, to collect information about
- * the run.
+ * This class contains a lot of public variables that can be updated by other
+ * classes during a simulation, to collect information about the run.
  */
-public class Statistics
-{
-	/** The number of processes that have exited the system */
-	public long nofCompletedProcesses = 0;
-	
-	/** The number of processes that have entered the system */
-	public long nofCreatedProcesses = 0;
-	
-	/** The total time the CPU has forced a process change */
-	public long nofForcedProcessChanges = 0;
-	
-	/** The total time that all completed processes have spent waiting for memory */
-	public long totalTimeSpentWaitingForMemory = 0;
-	
-	/** The time-weighted length of the memory queue, divide this number by the total time to get average queue length */
-	public long memoryQueueLengthTime = 0;
-	
-	/** The largest memory queue length that has occurred */
-	public long memoryQueueLargestLength = 0;
+public class Statistics {
+	private static long processesCompleted = 0;
+	private static long processesCreated = 0;
+	private static long processesForceChanged = 0;
+	private static long processesMemoryWaitTotal = 0;
 
-	/** The time-weighted length of the CPU queue, divide this number by the total time to get average queue length */
-	public long cpuQueueLengthTime = 0;
+	private static long memoryQueueLengthTime = 0;
+	private static long memoryQueueLengthLargest = 0;
 
-	/** The largest CPU queue length that has occurred */
-	public long cpuQueueLargestLength = 0;
+	private static long cpuQueueLengthTime = 0;
+	private static long cpuQueueLengthLargest = 0;
+	private static long cpuIdleTime = 0;
 
-	/** The total time the CPU has been idle */
-	public long totalIdleCPUTime = 0;
+	private static long ioQueueLengthTime = 0;
+	private static long ioQueueLengthLargest = 0;
+	private static long ioIdleTime = 0;
 	
+	/**
+	 * Increment the number of processes completed
+	 */
+	public static void processCompleted() {
+		processesCompleted++;
+	}
+
+	/**
+	 * Increment the number of processes created
+	 */
+	public static void processCreated() {
+		processesCreated++;
+	}
+
+	/**
+	 * Increment the number of processes forced changed
+	 */
+	public static void processForceChange() {
+		processesForceChanged++;
+	}
+
+	/**
+	 * Increment how long all processes have been waiting
+	 * 
+	 * @param time - 
+	 */
+	public static void processMemoryWait(long time) {
+		processesMemoryWaitTotal += time;
+	}
+
+	/**
+	 * 
+	 * @param length - 
+	 * @param time - 
+	 */
+	public static void memoryQueueLengthTime(long length, long time) {
+		memoryQueueLengthTime += length * time;
+	}
+	
+	/**
+	 * 
+	 * @param length
+	 */
+	public static void memoryQueueLenght(long length) {
+		if (length > memoryQueueLengthLargest) {
+			memoryQueueLengthLargest = length;
+		}
+	}
+	
+	/**
+	 * 
+	 * @param length
+	 * @param time
+	 */
+	public static void cpuQueueLengthTime(long length, long time) {
+		cpuQueueLengthTime += length * time;
+	}
+	
+	/**
+	 * 
+	 * @param length
+	 */
+	public static void cpuQueueLength(long length) {
+		if (length > cpuQueueLengthLargest) {
+			cpuQueueLengthLargest = length;
+		}
+	}
+	
+	/**
+	 * 
+	 * @param time
+	 */
+	public static void cpuIdleTime(long time) {
+		cpuIdleTime += time;
+	}
+	
+	/**
+	 * 
+	 * @param length
+	 * @param time
+	 */
+	public static void ioQueueLengthTime(long length, long time) {
+		ioQueueLengthTime += length * time;
+	}
+	
+	/**
+	 * 
+	 * @param length
+	 */
+	public static void ioQueueLength(long length) {
+		if (length > ioQueueLengthLargest) {
+			ioQueueLengthLargest = length;
+		}
+	}
+
+	/**
+	 * 
+	 * @param time
+	 */
+	public static void ioIdleTime(long time) {
+		ioIdleTime += time;
+	}
 
 	/**
 	 * Prints out a report summarizing all collected data about the simulation.
-	 * @param simulationLength	The number of milliseconds that the simulation covered.
+	 * 
+	 * @param simulationLength The number of milliseconds that the simulation
+	 *            covered.
 	 */
-	public void printReport(long simulationLength) {
+	public static void printReport(long simulationLength) {
 		System.out.println();
 		System.out.println("Simulation statistics:");
 		System.out.println();
-		System.out.println("Number of completed processes:                                "+nofCompletedProcesses);
-		System.out.println("Number of created processes:                                  "+nofCreatedProcesses);
-		System.out.println("Number of (forced) process switches:                          "+nofForcedProcessChanges);
+		System.out.println("Number of completed processes:                                " + processesCompleted);
+		System.out.println("Number of created processes:                                  " + processesCreated);
+		System.out.println("Number of (forced) process switches:                          " + processesForceChanged);
 		System.out.println();
-		System.out.println("Largest occuring memory queue length:                         "+memoryQueueLargestLength);
-		System.out.println("Average memory queue length:                                  "+(float)memoryQueueLengthTime/simulationLength);
-		if(nofCompletedProcesses > 0) {
-			System.out.println("Average # of times a process has been placed in memory queue: "+1);
-			System.out.println("Average time spent waiting for memory per process:            "+
-				totalTimeSpentWaitingForMemory/nofCompletedProcesses+" ms");
+		System.out.println("Largest occuring memory queue length:                         " + memoryQueueLengthLargest);
+		System.out.println("Average memory queue length:                                  " + (float) memoryQueueLengthTime / simulationLength);
+		if (processesCompleted > 0) {
+			System.out
+					.println("Average # of times a process has been placed in memory queue: " + 1);
+			System.out
+					.println("Average time spent waiting for memory per process:            "
+							+ processesMemoryWaitTotal
+							/ processesCompleted
+							+ " ms");
 		}
 	}
 }

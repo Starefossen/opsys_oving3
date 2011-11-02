@@ -25,5 +25,5 @@ public interface Gui {
 	 * @param time The (simulated) time that has passed since the last call to
 	 *            this method.
 	 */
-	public void timePassed(long time);
+	public void timePassed(long time, long freeMemory);
 }

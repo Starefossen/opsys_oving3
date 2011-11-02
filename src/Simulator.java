@@ -12,21 +12,21 @@ public class Simulator implements Constants {
 
 	/** Reference to the CPU unit */
 	private CPU cpu;
-
+	
+	/** Reference to the IO unit */
+	private IO io;
+	
 	/** Reference to the GUI interface */
 	private Gui gui;
 
-	/** Reference to the statistics collector */
-	private Statistics statistics;
-
-	/** The global clock */
-	private long clock;
+	/** Max CPU time */
+	private long maxCpuTime;
 
 	/** The length of the simulation */
 	private long simulationLength;
 
 	/** The average length between process arrivals */
-	private long avgArrivalInterval;
+	private long avgProcessArrival;
 
 	/** Class name used for debug messages */
 	private final static String CLASS_NAME = "Simulator";
@@ -62,30 +62,14 @@ public class Simulator implements Constants {
 			long memorySize, long maxCpuTime, long avgIoTime,
 			long simulationLength, long avgArrivalInterval, Gui gui) {
 
-		// System clock
-		this.clock = 0;
-
-		// Simulation length
 		this.simulationLength = simulationLength;
-
-		// Average Arrival Interval
-		this.avgArrivalInterval = avgArrivalInterval;
-
-		// GUI Reference
+		this.avgProcessArrival = avgArrivalInterval;
 		this.gui = gui;
 
-		// Statistics
-		this.statistics = new Statistics();
-
-		// Event Queue
 		this.eventQueue = new EventQueue();
-
-		// RAM
-		this.memory = new Memory(memoryQueue, memorySize, this.statistics);
-
-		// CPU
-		this.cpu = new CPU(cpuQueue, maxCpuTime, this.statistics, this.gui,
-				this.memory);
+		this.memory = new Memory(memoryQueue, memorySize);
+		this.cpu = new CPU(cpuQueue, maxCpuTime, this.gui, this.memory);
+		//this.io = new IO(ioQueue);
 	}
 
 	/**
@@ -99,39 +83,31 @@ public class Simulator implements Constants {
 		// Generate the first process arrival event
 		eventQueue.insertEvent(new Event(NEW_PROCESS, 0));
 
-		// Process events until the simulation length is exceeded:
-		// HERE IS WHERE THE ACTION IS DONE!!!!
-		while (clock < simulationLength && !eventQueue.isEmpty()) {
-			Debug.print(CLASS_NAME, "simulate", String.valueOf(this.clock));
+		while (SystemClock.getTime() < simulationLength && !eventQueue.isEmpty()) {
 
 			// Find the next event
 			Event event = eventQueue.getNextEvent();
+			long eventTime = event.getTime();
 
-			// Find out how much time that passed...
-			long timeDifference = event.getTime() - this.clock;
+			// Time passed since last event
+			long timePassed = eventTime - SystemClock.getTime();
 
-			// Debug info
-			Debug.print(CLASS_NAME, "simulate", "type = '" + event.getType()
-					+ "' - time = '" + event.getTime() + "' - time passed = '"
-					+ timeDifference + "'");
-
-			// ...and update the clock.
-			clock = event.getTime();
+			// Update System Clock
+			SystemClock.setTime(eventTime);
 
 			// Let the RAM know that time has passed
-			this.memory.timePassed(timeDifference);
-
 			// Let the GUI know that time has passed
-			this.gui.timePassed(timeDifference);
-
 			// Let CPU know that time has passed
-			this.cpu.timePassed(timeDifference);
+			this.memory.timePassed(timePassed);
+			//this.io.timePassed(timeDifference);
+			this.cpu.timePassed(timePassed);
+			this.gui.timePassed(timePassed, this.memory.getFreeMemorySize());
 
 			// Let IO know that time has passed
 			//this.io.timePassed(timeDifference);
 
 			// Deal with the event
-			if (clock < simulationLength) {
+			if (eventTime < simulationLength) {
 				processEvent(event);
 			}
 
@@ -142,7 +118,7 @@ public class Simulator implements Constants {
 		}
 		System.out.println("..done.");
 		// End the simulation by printing out the required statistics
-		statistics.printReport(simulationLength);
+		Statistics.printReport(simulationLength);
 	}
 
 	/**
@@ -179,30 +155,61 @@ public class Simulator implements Constants {
 		Debug.print(CLASS_NAME, "createProcess", "Called");
 
 		// Create a new process
-		Process newProcess = new Process(this.memory.getMemorySize(), clock);
+		Process newProcess = new Process(this.memory.getMemorySize());
+		
 		this.memory.insertProcess(newProcess);
 
 		// Transfer process from memory to ready queue
 		flushMemoryQueue();
 
 		// Get time for next process arrival
-		long nextArrivalTime = getNextTime();
+		long arrivalTime = getNextProcessArrivalTime();
 
 		// Add an event for the next process arrival
-		eventQueue.insertEvent(new Event(NEW_PROCESS, nextArrivalTime));
+		eventQueue.insertEvent(new Event(NEW_PROCESS, arrivalTime));
 
 		// Update statistics
-		statistics.nofCreatedProcesses++;
+		Statistics.processCreated();
 	}
 
+	/**
+	 * Create next event for new process
+	 * @param p
+	 */
+	private void createEventForNewProcess(Process p) {
+		long processRemainingTime = p.getRemainingCPUTime();
+		long maxCpuTime = this.maxCpuTime;
+		long processNextIO = p.getTimeToNextIoOperation();
+		
+		if (processRemainingTime < maxCpuTime && processRemainingTime < processNextIO) {
+			// Process is finished
+			this.newEvent(END_PROCESS, processRemainingTime);
+		} else if (processRemainingTime > maxCpuTime && processRemainingTime < processNextIO) {
+			// Process max time in CPU exceeded
+			this.newEvent(SWITCH_PROCESS, maxCpuTime);
+		} else {
+			// Process needs to perform IO operation
+			this.newEvent(IO_REQUEST, processNextIO);
+		}
+	}
+	
+	/**
+	 * 
+	 */
+	private void newEvent(int EVENT, long time) {
+		long eventTime = SystemClock.getTime()+time;
+		eventQueue.insertEvent(new Event(EVENT, eventTime));
+	}
+	
 	/**
 	 * Get time for next event
 	 * 
 	 * @return random time greater then current time for a new event
 	 */
-	private long getNextTime() {
-		return this.clock + 1
-				+ (long) (2 * Math.random() * this.avgArrivalInterval);
+	private long getNextProcessArrivalTime() {
+		long time = SystemClock.getTime();
+		long rand = (long) (2 * Math.random() * this.avgProcessArrival);
+		return time + 1 + rand;
 	}
 
 	/**
@@ -212,32 +219,30 @@ public class Simulator implements Constants {
 	private void flushMemoryQueue() {
 		Debug.print(CLASS_NAME, "flushMemoryQueue", "Called");
 
-		Process p = this.memory.checkMemory(clock);
+		Process p = this.memory.getNextProcess();
 
 		// As long as there is enough memory, processes are moved from the
 		// memory queue to the CPU queue
 		while (p != null) {
-			Debug.print(CLASS_NAME, "flushMemoryQueue", "Process found");
-
-			// Add this process to the CPU queue!
 			this.cpu.insertProcess(p);
+			this.createEventForNewProcess(p);
 
 			// Also add new events to the event queue if needed
 			// TODO: Do this
 
 			// Since we haven't implemented the CPU and I/O device yet,
 			// we let the process leave the system immediately, for now.
-			this.cpu.processCompleted(p);
-			this.memory.processCompleted(p);
+			// this.cpu.processCompleted(p);
+			// this.memory.processCompleted(p);
 
 			// Try to use the freed memory:
 			flushMemoryQueue();
 
 			// Update statistics
-			p.updateStatistics(statistics);
+			p.updateStatistics();
 
 			// Check for more free memory
-			p = this.memory.checkMemory(clock);
+			p = this.memory.getNextProcess();
 		}
 	}
 
@@ -246,7 +251,6 @@ public class Simulator implements Constants {
 	 */
 	private void switchProcess() {
 		Debug.print(CLASS_NAME, "switchProcess", "Called");
-		// Incomplete
 	}
 
 	/**
