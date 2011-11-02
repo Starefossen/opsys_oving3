@@ -25,4 +25,11 @@ public interface Constants
 	public final static int NORTH = 2;
 	/** The orientation EAST */
 	public final static int EAST = 3;
+	
+	public static final int MEMORY_QUEUE = 1;
+	public static final int CPU_ACTIVE = 2;
+	public static final int CPU_QUEUE = 3;
+	public static final int IO_QUEUE = 4;
+	public static final int IO_ACTIVE = 5;
+	public static final int FINISHED = 6;
 }

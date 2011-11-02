@@ -28,22 +28,22 @@ public class Process implements Constants {
 	private long cpuTimeNeeded;
 
 	/** The average time between the need for I/O operations for this process */
-	private long avgIoInterval;
+	private long ioInterval;
 
 	/** The time left until the next time this process needs I/O */
 	private long timeToNextIoOperation = 0;
 
 	/** The time that this process has spent waiting in the memory queue */
-	private long timeSpentWaitingForMemory = 0;
+	private long timeSpentInMemoryQueue = 0;
 
 	/** The time that this process has spent waiting in the CPU queue */
-	private long timeSpentInReadyQueue = 0;
+	private long timeSpentInCPUQueue = 0;
 
 	/** The time that this process has spent processing */
 	private long timeSpentInCpu = 0;
 
 	/** The time that this process has spent waiting in the I/O queue */
-	private long timeSpentWaitingForIo = 0;
+	private long timeSpentInIoQueue = 0;
 
 	/** The time that this process has spent performing I/O */
 	private long timeSpentInIo = 0;
@@ -56,6 +56,8 @@ public class Process implements Constants {
 
 	/** The global time of the last event involving this process */
 	private long timeOfLastEvent;
+
+	private int PREV_STATE;;
 
 	/**
 	 * Creates a new process with given parameters. Other parameters are
@@ -73,7 +75,7 @@ public class Process implements Constants {
 
 		// Average interval between I/O requests varies from 1% to 25% of CPU
 		// time needed
-		avgIoInterval = (1 + (long) (Math.random() * 25)) * cpuTimeNeeded / 100;
+		timeToNextIoOperation = ioInterval = (1 + (long) (Math.random() * 25)) * cpuTimeNeeded / 100;
 
 		// The first and latest event involving this process is its creation
 		timeOfLastEvent = SystemClock.getTime();
@@ -86,6 +88,8 @@ public class Process implements Constants {
 		int green = 64 + (int) ((processId * 47) % 128);
 		int blue = 64 + (int) ((processId * 53) % 128);
 		color = new Color(red, green, blue);
+		
+		PREV_STATE = MEMORY_QUEUE;
 	}
 
 	/**
@@ -95,7 +99,7 @@ public class Process implements Constants {
 		String res = "process id = '" + processId + "' - ";
 		res += "RAM needed = '" + memoryNeeded + "' - ";
 		res += "CPU time needed = '" + cpuTimeNeeded + "' - ";
-		res += "avg IO interval = '" + avgIoInterval + "' - ";
+		res += "avg IO interval = '" + ioInterval + "' - ";
 		res += "time of last event = '" + timeOfLastEvent + "'";
 
 		return res;
@@ -137,7 +141,7 @@ public class Process implements Constants {
 	 * @param clock The time when the process leaves the memory queue.
 	 */
 	public void leaveMemoryQueue() {
-		timeSpentWaitingForMemory += SystemClock.getTime() - timeOfLastEvent;
+		timeSpentInMemoryQueue += SystemClock.getTime() - timeOfLastEvent;
 		timeOfLastEvent = SystemClock.getTime();
 	}
 
@@ -149,21 +153,28 @@ public class Process implements Constants {
 	public long getMemoryNeeded() {
 		return memoryNeeded;
 	}
-
-	/**
-	 * Set time spent in CPU
-	 * 
-	 * @param time Time spent in CPU
-	 * 
-	 * @return Returns a positive {@code long} if there are remaining time;
-	 *         negative {@code long} if there was a rest time where the CPU was
-	 *         idle.
-	 */
-	public void incrementCPUTime(long time) {
-		this.timeSpentInCpu += time;
-		this.timeToNextIoOperation -= time;
-	}
 	
+	public void updateProcess(int NEW_STATE) {
+		long timePassed = SystemClock.getTime()-this.timeOfLastEvent;
+		
+		if (PREV_STATE == MEMORY_QUEUE) {
+			this.timeSpentInMemoryQueue += timePassed;
+		} else if (PREV_STATE == CPU_ACTIVE) {
+			this.timeSpentInCpu += timePassed;
+			this.timeToNextIoOperation -= timePassed;
+			this.cpuTimeNeeded -= timePassed;
+		} else if (NEW_STATE == CPU_ACTIVE) {
+			this.timeSpentInCPUQueue += timePassed;
+		} else if (PREV_STATE == IO_QUEUE) {
+			this.timeSpentInIoQueue += timePassed;
+		} else if (PREV_STATE == IO_ACTIVE) {
+			this.timeSpentInIo += timePassed;
+		}
+		
+		PREV_STATE = NEW_STATE;
+		this.timeOfLastEvent = SystemClock.getTime();
+	}
+		
 	/**
 	 * 
 	 * @return
@@ -178,7 +189,7 @@ public class Process implements Constants {
 	 * @return Returns a positive {@code long} of remaining time needed
 	 */
 	public long getRemainingCPUTime() {
-		return this.cpuTimeNeeded - this.timeSpentInCpu;
+		return this.cpuTimeNeeded;
 	}
 	
 	/**
@@ -189,7 +200,7 @@ public class Process implements Constants {
 	 * @param statistics The Statistics object to be updated.
 	 */
 	public void updateStatistics() {
-		Statistics.processMemoryWait(timeSpentWaitingForMemory);
+		Statistics.processMemoryWait(timeSpentInMemoryQueue);
 	}
 	// Add more methods as needed
 }

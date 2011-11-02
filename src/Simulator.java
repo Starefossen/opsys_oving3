@@ -50,8 +50,9 @@ public class Simulator implements Constants {
 
 		this.simulationLength = simulationLength;
 		this.avgProcessArrival = avgArrivalInterval;
+		this.maxCpuTime = maxCpuTime;
 		this.gui = gui;
-
+		
 		this.eventQueue = new EventQueue();
 		this.memory = new Memory(memoryQueue, memorySize);
 		this.cpu = new CPU(cpuQueue, this.gui);
@@ -74,7 +75,9 @@ public class Simulator implements Constants {
 			Event event = eventQueue.getNextEvent();
 			long timePassed = event.getTime() - SystemClock.getTime();
 			SystemClock.setTime(event.getTime());
-
+			
+			System.out.println("System time: "+SystemClock.getTime());
+			
 			// Time passed for units
 			this.memory.timePassed(timePassed);
 			// this.io.timePassed(timeDifference);
@@ -128,11 +131,15 @@ public class Simulator implements Constants {
 			long maxCpuTime = this.maxCpuTime;
 			long processNextIO = p.getTimeToNextIoOperation();
 
+			System.out.println("Got process from CPU queue...");
+			System.out.println("processRemainingTime:				"+processRemainingTime);
+			System.out.println("maxCpuTime:					"+maxCpuTime);
+			System.out.println("processNextIO:					"+processNextIO);
+
 			if (processRemainingTime < maxCpuTime && processRemainingTime < processNextIO) {
 				// Process is finished
 				this.newEvent(END_PROCESS, processRemainingTime);
-			} else if (processRemainingTime > maxCpuTime
-					&& processRemainingTime < processNextIO) {
+			} else if (maxCpuTime < processRemainingTime && maxCpuTime < processNextIO) {
 				// Process max time in CPU exceeded
 				this.newEvent(SWITCH_PROCESS, maxCpuTime);
 			} else {
@@ -221,7 +228,7 @@ public class Simulator implements Constants {
 		Process p = cpu.stopCurrentProcess(); 
 		Statistics.processForceChange();
 		cpu.insertProcess(p);
-		// p.updateProcess();
+		p.updateProcess(CPU_QUEUE);
 
 		// 2. LOAD NEXT PROCESS IN CPU QUEUE
 		this.cpuLoadNextProcess();
@@ -239,7 +246,7 @@ public class Simulator implements Constants {
 		Process p = cpu.stopCurrentProcess(); 
 		Statistics.processCompleted();
 		//p.releaseMemory()
-		//p.updateProcess();
+		p.updateProcess(FINISHED);
 
 		// 2. LOAD NEXT PROCESS IN CPU QUEUE
 		this.cpuLoadNextProcess();
@@ -256,12 +263,17 @@ public class Simulator implements Constants {
 
 		// 1. GET CURRENT PROCESS IN CPU
 		Process p = cpu.stopCurrentProcess(); 
-		//Statistics.ioRequest();
-		//io.insert(p);
-		//p.updateProcess();
-
-		// 2. LOAD NEXT PROCESS IN CPU QUEUE
-		this.cpuLoadNextProcess();
+		if (p == null) {
+			System.out.println("Process is empty!");
+			System.exit(0);
+		} else {
+			//Statistics.ioRequest();
+			io.insertProcess(p);
+			p.updateProcess(IO_QUEUE);
+	
+			// 2. LOAD NEXT PROCESS IN CPU QUEUE
+			this.cpuLoadNextProcess();
+		}
 	}
 
 	/**
@@ -274,15 +286,16 @@ public class Simulator implements Constants {
 		// Incomplete
 
 		// 1. GET CURRENT PROCESS IN IO
-		/*
-		 * Process p = io.stopCurrentProcess(); cpu.insert(p); p.updateProcess()
-		 */
+		Process p = io.stopCurrentProcess();
+		cpu.insertProcess(p);
+		p.updateProcess(CPU_QUEUE);
 
 		// 2. LOAD NEXT PROCESS IN IO QUEUE
-		/*
-		 * Process p = io.startNextProcess(); if (p != null) {
-		 * this.newEvent(END_IO, p.getIoTime()); }
-		 */
+		p = io.startNextProcess(); 
+		if (p != null) {
+			p.updateProcess(IO_ACTIVE);
+			//this.newEvent(END_IO, p.getIoTime());
+		}
 	}
 
 	/**

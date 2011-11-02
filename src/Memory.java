@@ -59,7 +59,7 @@ public class Memory {
 	 * 			empty.
 	 */
 	public Process getNextProcess() {
-		System.out.println("getNextProcess()");
+		System.out.println("Memory.getNextProcess()");
 		System.out.println("Free memory: "+this.getFreeMemorySize());
 		Process p = null;
 		
@@ -71,7 +71,10 @@ public class Memory {
 				p.leaveMemoryQueue();
 			} else {
 				p = null;
+				System.out.println("Memory out of memory");
 			}
+		} else {
+			System.out.println("No waiting in queue.");
 		}
 		
 		return p;
