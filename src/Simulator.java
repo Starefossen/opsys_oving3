@@ -30,6 +30,7 @@ public class Simulator implements Constants {
 
 	/** Class name used for debug messages */
 	private final static String CLASS_NAME = "Simulator";
+	private IO io;
 
 	/**
 	 * Constructs a scheduling simulator with the given parameters.
@@ -94,6 +95,8 @@ public class Simulator implements Constants {
 			this.cpu.timePassed(timePassed);
 			this.gui.timePassed(timePassed, this.memory.getFreeMemorySize());
 
+			// Let IO know that time has passed
+			//this.io.timePassed(timeDifference);
 			// Deal with the event
 			if (eventTime < simulationLength) {
 				processEvent(event);
