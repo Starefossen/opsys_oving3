@@ -165,7 +165,8 @@ public class Process implements Constants {
 			this.cpuTimeNeeded -= timePassed;
 			
 			if (timeToNextIoOperation == 0) {
-				this.timeToNextIoOperation = this.ioInterval;
+				//this.timeToNextIoOperation = this.ioInterval;
+				this.timeToNextIoOperation = 99999999;
 			}
 			
 		} else if (NEW_STATE == CPU_ACTIVE) {

@@ -260,8 +260,14 @@ public class Simulator implements Constants {
 
 		// 1. STOP CURRENT PROCESS
 		Process p = cpu.stopCurrentProcess(); 
+		
+		if (p == null) {
+			System.out.println("Process is null!");
+			System.exit(0);
+		}
+		
 		Statistics.processCompleted();
-		//p.releaseMemory()
+		memory.releaseMemory(p);
 		p.updateProcess(FINISHED);
 
 		// 2. LOAD NEXT PROCESS IN CPU QUEUE
