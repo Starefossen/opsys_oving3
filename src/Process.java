@@ -56,7 +56,10 @@ public class Process implements Constants {
 
 	/** The global time of the last event involving this process */
 	private long timeOfLastEvent;
-
+	
+	private long timeAddedToSystem;
+	private long timeCreated;
+	
 	private int PREV_STATE;
 
 	/**
@@ -67,6 +70,8 @@ public class Process implements Constants {
 	 * @param creationTime The global time when this process is created.
 	 */
 	public Process(long memorySize) {
+		timeCreated = SystemClock.getTime();
+		
 		// Memory need varies from 100 kB to 25% of memory size
 		memoryNeeded = 100 + (long) (Math.random() * (memorySize / 4 - 100));
 
@@ -142,17 +147,6 @@ public class Process implements Constants {
 	}
 
 	/**
-	 * This method is called when the process leaves the memory queue (and
-	 * enters the CPU queue).
-	 * 
-	 * @param clock The time when the process leaves the memory queue.
-	 */
-	public void leaveMemoryQueue() {
-		timeSpentInMemoryQueue += SystemClock.getTime() - timeOfLastEvent;
-		timeOfLastEvent = SystemClock.getTime();
-	}
-
-	/**
 	 * Get amount of memory needed.
 	 * 
 	 * @return The a {@code long} amount of memory needed by this process.
@@ -170,9 +164,11 @@ public class Process implements Constants {
 			Statistics.processesPlacedInIOQueue();
 		} else if (NEW_STATE == FINISHED) {
 			Statistics.processCompleted();
+			Statistics.processesTotalTimeInSystem(SystemClock.getTime()-this.timeAddedToSystem);
 		}
 		
 		if (PREV_STATE == MEMORY_QUEUE) {
+			this.timeAddedToSystem = SystemClock.getTime();
 			this.timeSpentInMemoryQueue += timePassed;
 			Statistics.processMemoryWait(timePassed);
 			Statistics.processAccesspted();

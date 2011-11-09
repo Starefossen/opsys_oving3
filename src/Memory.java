@@ -68,7 +68,6 @@ public class Memory {
 			if (p.getMemoryNeeded() <= freeMemory) {
 				queue.removeNext();
 				this.freeMemory -= p.getMemoryNeeded();
-				p.leaveMemoryQueue();
 			} else {
 				p = null;
 				System.out.println("Memory out of memory");
