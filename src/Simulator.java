@@ -82,9 +82,9 @@ public class Simulator implements Constants {
 			
 			// Time passed for units
 			this.memory.timePassed(timePassed);
-			// this.io.timePassed(timeDifference);
-			// this.cpu.timePassed(timePassed);
-			// this.gui.timePassed(timePassed, this.memory.getFreeMemorySize());
+			this.io.timePassed(timePassed);
+			this.cpu.timePassed(timePassed);
+			this.gui.timePassed(timePassed, this.memory.getFreeMemorySize());
 
 			// Deal with the event
 			if (event.getTime() < simulationLength) {
@@ -137,9 +137,9 @@ public class Simulator implements Constants {
 			long pid = p.getProcessId();
 			
 			System.out.println("["+pid+"] Got process from CPU queue...");
-			System.out.println("["+pid+"] processRemainingTime:				"+processRemainingTime);
-			System.out.println("["+pid+"] maxCpuTime:						"+maxCpuTime);
-			System.out.println("["+pid+"] processNextIO:					"+processNextIO);
+			System.out.println("["+pid+"] processRemainingTime:               "+processRemainingTime);
+			System.out.println("["+pid+"] maxCpuTime:                         "+maxCpuTime);
+			System.out.println("["+pid+"] processNextIO:                      "+processNextIO);
 
 			if (processRemainingTime < maxCpuTime && processRemainingTime < processNextIO) {
 				// Process is finished
@@ -200,9 +200,9 @@ public class Simulator implements Constants {
 		Process p = this.memory.getNextProcess();
 
 		while (p != null) {
-			System.out.println("got process from memory");
+			System.out.println("Got process from Memory queue...");
 			this.cpu.insertProcess(p);
-			p.updateStatistics();
+			p.updateProcess(CPU_QUEUE);
 			p = this.memory.getNextProcess();
 		}
 	}
@@ -260,13 +260,6 @@ public class Simulator implements Constants {
 
 		// 1. STOP CURRENT PROCESS
 		Process p = cpu.stopCurrentProcess(); 
-		
-		if (p == null) {
-			System.out.println("Process is null!");
-			System.exit(0);
-		}
-		
-		Statistics.processCompleted();
 		memory.releaseMemory(p);
 		p.updateProcess(FINISHED);
 
@@ -284,21 +277,9 @@ public class Simulator implements Constants {
 
 		// 1. GET CURRENT PROCESS IN CPU
 		Process p = cpu.stopCurrentProcess(); 
-
-		if (p == null) {
-			System.out.println("Kake");
-			System.exit(0);
-		}
-		
-		//Statistics.ioRequest();
 		io.insertProcess(p);
-		p.updateProcess(IO_ACTIVE);
+		p.updateProcess(IO_QUEUE);
 		
-		// CPU idle check
-		if (cpu.isIdle()) {
-			this.cpuLoadNextProcess();
-		}
-
 		// IO idle check
 		if (io.isIdle()) {
 			p = io.startNextProcess();
@@ -322,7 +303,6 @@ public class Simulator implements Constants {
 
 		// 1. GET CURRENT PROCESS IN IO
 		Process p = io.stopCurrentProcess();
-		
 		cpu.insertProcess(p);
 		p.updateProcess(CPU_QUEUE);
 		
@@ -347,8 +327,7 @@ public class Simulator implements Constants {
 	 */
 	public static void main(String args[]) {
 		if (!TESTING_ENABLED) {
-			BufferedReader reader = new BufferedReader(new InputStreamReader(
-					System.in));
+			BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 			System.out.println("Please input system parameters: ");
 
 			System.out.print("Memory size (KB): ");

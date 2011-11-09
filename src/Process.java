@@ -75,8 +75,11 @@ public class Process implements Constants {
 
 		// Average interval between I/O requests varies from 1% to 25% of CPU
 		// time needed
-		timeToNextIoOperation = ioInterval = (1 + (long) (Math.random() * 25)) * cpuTimeNeeded / 100;
-
+		ioInterval = (1 + (long) (Math.random() * 25)) * cpuTimeNeeded / 100;
+		
+		// Time to next IO request
+		timeToNextIoOperation = generateTimeToNextIoOperation();
+		
 		// The first and latest event involving this process is its creation
 		timeOfLastEvent = SystemClock.getTime();
 
@@ -91,7 +94,11 @@ public class Process implements Constants {
 		
 		PREV_STATE = MEMORY_QUEUE;
 	}
-
+	
+	private long generateTimeToNextIoOperation() {
+		return (long) (2 * Math.random() * this.ioInterval);
+	}
+	
 	/**
 	 * Process to String for debugging purposes.
 	 */
@@ -157,24 +164,37 @@ public class Process implements Constants {
 	public void updateProcess(int NEW_STATE) {
 		long timePassed = SystemClock.getTime()-this.timeOfLastEvent;
 		
+		if (NEW_STATE == CPU_QUEUE) {
+			Statistics.processesPlacedInCpuQueue();
+		} else if (NEW_STATE == IO_QUEUE) {
+			Statistics.processesPlacedInIOQueue();
+		} else if (NEW_STATE == FINISHED) {
+			Statistics.processCompleted();
+		}
+		
 		if (PREV_STATE == MEMORY_QUEUE) {
 			this.timeSpentInMemoryQueue += timePassed;
+			Statistics.processMemoryWait(timePassed);
 		} else if (PREV_STATE == CPU_ACTIVE) {
 			this.timeSpentInCpu += timePassed;
+			Statistics.cpuActiveTime(timePassed);
+			
 			this.timeToNextIoOperation -= timePassed;
 			this.cpuTimeNeeded -= timePassed;
 			
 			if (timeToNextIoOperation == 0) {
-				//this.timeToNextIoOperation = this.ioInterval;
-				this.timeToNextIoOperation = 99999999;
+				this.timeToNextIoOperation = this.generateTimeToNextIoOperation();
 			}
 			
 		} else if (NEW_STATE == CPU_ACTIVE) {
 			this.timeSpentInCPUQueue += timePassed;
+			Statistics.processCPUWait(timePassed);
 		} else if (PREV_STATE == IO_QUEUE) {
 			this.timeSpentInIoQueue += timePassed;
+			Statistics.processIOWait(timePassed);
 		} else if (PREV_STATE == IO_ACTIVE) {
 			this.timeSpentInIo += timePassed;
+			Statistics.ioActiveTime(timePassed);
 		}
 		
 		PREV_STATE = NEW_STATE;
@@ -197,16 +217,4 @@ public class Process implements Constants {
 	public long getRemainingCPUTime() {
 		return this.cpuTimeNeeded;
 	}
-	
-	/**
-	 * Updates the statistics collected by the given Statistic object, adding
-	 * data collected by this process. This method is called when the process
-	 * leaves the system. (eg. process is completed)
-	 * 
-	 * @param statistics The Statistics object to be updated.
-	 */
-	public void updateStatistics() {
-		Statistics.processMemoryWait(timeSpentInMemoryQueue);
-	}
-	// Add more methods as needed
 }

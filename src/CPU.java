@@ -3,41 +3,62 @@
  * simulated system.
  */
 public class CPU implements Constants {
-	// pewpew
+	/** */
 	private Queue queue;
-
+	/** */
 	private Process cp;
-
+	/** */
 	private Gui gui;
 
+	/**
+	 * 
+	 * @param cpuQueue
+	 * @param gui
+	 */
 	public CPU(Queue cpuQueue, Gui gui) {
 
 		this.queue = cpuQueue;
 		this.gui = gui;
 	}
 
+	/**
+	 * 
+	 * @return
+	 */
 	public Process startNextProcess() {
 
-		cp = getNextProcess();
-		gui.setCpuActive(cp); // gui
+		this.cp = getNextProcess();
+		this.gui.setCpuActive(cp); // gui
 
-		return cp;
+		return this.cp;
 	}
 
+	/**
+	 * 
+	 * @return
+	 */
 	public Process stopCurrentProcess() {
 
-		gui.setCpuActive(null); // gui
+		this.gui.setCpuActive(null); // gui
 
-		Process tmp = cp;
-		cp = null;
+		Process tmp = this.cp;
+		this.cp = null;
 
 		return tmp;
 	}
 
+	/**
+	 * 
+	 * @param p
+	 */
 	public void insertProcess(Process p) {
 		queue.insert(p);
 	}
 
+	/**
+	 * 
+	 * @return
+	 */
 	public Process getNextProcess() {
 		if (queue.isEmpty()) {
 			return null;
@@ -55,6 +76,10 @@ public class CPU implements Constants {
 		return (this.cp == null);
 	}
 
+	/**
+	 * 
+	 * @param timePassed
+	 */
 	public void timePassed(long timePassed) {
 		// register CPU idle time
 		if (cp == null) {

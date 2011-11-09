@@ -97,7 +97,7 @@ public class SimulationGui extends JFrame implements Constants, ActionListener, 
 		startButton.setBounds(320,60,154,20);
 		startButton.addActionListener(this);
 		
-		startButton.doClick(); // added by dagga
+		//startButton.doClick(); // added by dagga
 	}
 
 	/**
@@ -179,11 +179,12 @@ public class SimulationGui extends JFrame implements Constants, ActionListener, 
 	 */
 	public void timePassed(long time, long freeMemory) {
 		timeElapsed += time;
-		timeElapsedLabel.setText("Time: "+timeElapsed+" - Free RAM: "+freeMemory+"");
+		timeElapsedLabel.setText("Time: "+timeElapsed+" - Free RAM: "+freeMemory+" - "+Statistics.getCpuUtilization());
 		timeElapsedLabel.repaint();
 		try	{
-			if(sleep && isShowing())
+			if(sleep && isShowing()) {
 				Thread.sleep((10000-simulationSpeedSlider.getValue())*time/3000);
+			}
 		} catch (InterruptedException ie) {}
 	}
 
