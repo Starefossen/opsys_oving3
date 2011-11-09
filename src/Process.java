@@ -57,7 +57,7 @@ public class Process implements Constants {
 	/** The global time of the last event involving this process */
 	private long timeOfLastEvent;
 
-	private int PREV_STATE;;
+	private int PREV_STATE;
 
 	/**
 	 * Creates a new process with given parameters. Other parameters are
@@ -175,6 +175,7 @@ public class Process implements Constants {
 		if (PREV_STATE == MEMORY_QUEUE) {
 			this.timeSpentInMemoryQueue += timePassed;
 			Statistics.processMemoryWait(timePassed);
+			Statistics.processAccesspted();
 		} else if (PREV_STATE == CPU_ACTIVE) {
 			this.timeSpentInCpu += timePassed;
 			Statistics.cpuActiveTime(timePassed);
@@ -185,7 +186,6 @@ public class Process implements Constants {
 			if (timeToNextIoOperation == 0) {
 				this.timeToNextIoOperation = this.generateTimeToNextIoOperation();
 			}
-			
 		} else if (NEW_STATE == CPU_ACTIVE) {
 			this.timeSpentInCPUQueue += timePassed;
 			Statistics.processCPUWait(timePassed);

@@ -5,6 +5,7 @@
 public class Statistics {
 	private static long processesCompleted = 0;
 	private static long processesCreated = 0;
+	private static long processesAccepted = 0;
 	private static long processesForceChanged = 0;
 	private static long processesIoOperations = 0;
 	private static long processesMemoryWaitTotal = 0;
@@ -40,7 +41,11 @@ public class Statistics {
 	public static void processCreated() {
 		processesCreated++;
 	}
-
+	
+	public static void processAccesspted() {
+		processesAccepted++;
+	}
+	
 	/**
 	 * Increment the number of processes forced changed
 	 */
@@ -229,10 +234,15 @@ public class Statistics {
 		if (processesCompleted > 0) {
 			System.out.println();
 			System.out.println("Average # of times a process has been placed in memory queue: " + 1);
-			System.out.println("Average # of times a process has been placed in CPI queue:    " + (float) processesPlacedInCpuQueue / processesCompleted);
-			System.out.println("Average # of times a process has been placed in IO queue:     " + (float) processesPlacedInIOQueue / processesCompleted);
+			System.out.println("Average # of times a process has been placed in CPI queue:    " + (float) processesPlacedInCpuQueue / processesAccepted);
+			System.out.println("Average # of times a process has been placed in IO queue:     " + (float) processesPlacedInIOQueue / processesAccepted);
 			System.out.println();
-			System.out.println("Average time spent waiting for memory per process:            " + processesMemoryWaitTotal / processesCompleted + " ms");
+			System.out.println("Average time spent in sytem per process:                      " + (long) simulationLength / processesAccepted + " ms?");
+			System.out.println("Average time spent waiting for memory per process:            " + (long) processesMemoryWaitTotal / processesAccepted + " ms?");
+			System.out.println("Average time spent waiting for CPU per process:               " + (long) processesCpuWaitTotal / processesAccepted + " ms");
+			System.out.println("Average time spent processing per process:                    " + (long) cpuActiveTime / processesAccepted + " ms");
+			System.out.println("Average time spent waiting for I/O per process:               " + (long) processesIoWaitTotal / processesAccepted + " ms");
+			System.out.println("Average time spent in O/O per process:                        " + (long) ioActiveTime / processesAccepted + " ms");
 		}
 	}
 }
