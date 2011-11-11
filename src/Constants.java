@@ -2,10 +2,10 @@ public interface Constants
 {
 	public static final boolean TESTING_ENABLED = true;
 	public static final long TESTING_MEMORY_SIZSE = 2048;
-	public static final long TESTING_CPU_TIME = 500;
-	public static final long TESTING_IO_TIME = 225;
+	public static final long TESTING_CPU_TIME = 50;
+	public static final long TESTING_IO_TIME = 3000;
 	public static final long TESTING_SIMULATION_LENGTH = 250000;
-	public static final long TESTING_AVG_ARRIVAL_INTERVAL = 5000;
+	public static final long TESTING_AVG_ARRIVAL_INTERVAL = 1000;
 	
 	/** Event type describing the arrival of a new process */
     public static final int NEW_PROCESS = 1;

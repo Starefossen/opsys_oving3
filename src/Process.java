@@ -171,7 +171,7 @@ public class Process implements Constants {
 			this.timeAddedToSystem = SystemClock.getTime();
 			this.timeSpentInMemoryQueue += timePassed;
 			Statistics.processMemoryWait(timePassed);
-			Statistics.processAccesspted();
+			Statistics.processAccepted();
 		} else if (PREV_STATE == CPU_ACTIVE) {
 			this.timeSpentInCpu += timePassed;
 			Statistics.cpuActiveTime(timePassed);

@@ -43,7 +43,7 @@ public class Statistics {
 		processesCreated++;
 	}
 	
-	public static void processAccesspted() {
+	public static void processAccepted() {
 		processesAccepted++;
 	}
 	
